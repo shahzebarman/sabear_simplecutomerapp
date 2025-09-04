@@ -11,9 +11,9 @@ pipeline {
         // This can be http or https
         NEXUS_PROTOCOL = "http"
         // Where your Nexus is running
-        NEXUS_URL = "18.221.189.193:8081/"
+        NEXUS_URL = "34.226.153.211:8081/"
         // Repository where we will upload the artifact
-        NEXUS_REPOSITORY = "sonarqube"
+        NEXUS_REPOSITORY = "new-nexus-repo"
         // Jenkins credential id to authenticate to Nexus OSS
         NEXUS_CREDENTIAL_ID = "nexus_keygen"
 	SCANNER_HOME = tool 'sonar_scanner'
@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     // Let's clone the source
-                    git 'https://github.com/betawins/sabear_simplecutomerapp.git';
+                    git 'https://github.com/shahzebarman/sabear_simplecutomerapp.git';
                 }
             }
         }
