@@ -16,7 +16,7 @@ pipeline {
         NEXUS_REPOSITORY = "new-nexus-repo"
         // Jenkins credential id to authenticate to Nexus OSS
         NEXUS_CREDENTIAL_ID = "nexus_keygen"
-	SCANNER_HOME = tool 'sonar_scanner'
+	SCANNER_HOME = tool 'sonar-scanner'
     }
     stages {
         stage("clone code") {
