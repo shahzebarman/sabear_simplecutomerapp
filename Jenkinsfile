@@ -30,24 +30,20 @@ pipeline {
                 sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
         }
-
-       stage("SonarQube Analysis") {
-    steps {
-        withSonarQubeEnv("${env.SONARQUBE_INSTALLATION_NAME}") {
-            sh """
-                echo "⚙️ Checking if compiled classes exist"
-                ls -la target/classes || echo "⚠️ target/classes does not exist!"
-
-                ${SCANNER_HOME}/bin/sonar-scanner \
-                -Dsonar.projectKey=Ncodeit \
-                -Dsonar.projectName=Ncodeit \
-                -Dsonar.projectVersion=2.0 \
-                -Dsonar.sources=src \
-                -Dsonar.java.binaries=target/classes \
-                -Dsonar.junit.reportsPath=target/surefire-reports \
-                -Dsonar.jacoco.reportPath=target/jacoco.exec \
-                -X
-                    """
+stage('SonarCloud') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+				sh '$SCANNER_HOME/bin/sonar-scanner \
+				-Dsonar.projectKey=Ncodeit \
+				-Dsonar.projectName=Ncodeit \
+				-Dsonar.projectVersion=2.0 \
+				-Dsonar.sources=/var/lib/jenkins/workspace/$JOB_NAME/src/ \
+				-Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
+				-Dsonar.junit.reportsPath=target/surefire-reports \
+				-Dsonar.jacoco.reportPath=target/jacoco.exec \
+				-Dsonar.java.binaries=src/com/room/sample '
+       
+                
                 
                 }
             }
