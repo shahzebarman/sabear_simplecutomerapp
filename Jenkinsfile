@@ -1,10 +1,10 @@
 pipeline {
     agent any
     tools {
-        maven "maven"  // Make sure this matches your Jenkins Maven tool name
+        maven "maven" // Replace with actual Maven tool name in Jenkins if different
     }
     environment {
-        // Nexus settings
+        // Nexus repository settings
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "34.226.153.211:8081"
@@ -14,8 +14,8 @@ pipeline {
         // Sonar scanner tool
         SCANNER_HOME = tool 'sonar-scanner'
 
-        // SonarQube installation name configured in Jenkins (change to your actual name)
-        SONARQUBE_NAME = "sonarqube"  
+        // This must match the name of your SonarQube installation in Jenkins > Configure System
+        SONARQUBE_INSTALLATION_NAME = "sonarqube"
     }
     stages {
         stage("Clone Code") {
@@ -30,19 +30,18 @@ pipeline {
             }
         }
 
-        stage('SonarCloud Analysis') {
+        stage("SonarQube Analysis") {
             steps {
-                withSonarQubeEnv("${env.sonar-qube}") {
+                withSonarQubeEnv("${env.SONARQUBE_INSTALLATION_NAME}") {
                     sh """
                         ${SCANNER_HOME}/bin/sonar-scanner \
                         -Dsonar.projectKey=Ncodeit \
                         -Dsonar.projectName=Ncodeit \
                         -Dsonar.projectVersion=2.0 \
                         -Dsonar.sources=src \
-                        -Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
+                        -Dsonar.binaries=target/classes \
                         -Dsonar.junit.reportsPath=target/surefire-reports \
-                        -Dsonar.jacoco.reportPath=target/jacoco.exec \
-                        -Dsonar.java.binaries=src/com/room/sample
+                        -Dsonar.jacoco.reportPath=target/jacoco.exec
                     """
                 }
             }
@@ -58,7 +57,7 @@ pipeline {
                     }
                     def artifact = filesByGlob[0]
                     echo "Found artifact: ${artifact.name}, path: ${artifact.path}"
-                    
+
                     nexusArtifactUploader(
                         nexusVersion: NEXUS_VERSION,
                         protocol: NEXUS_PROTOCOL,
@@ -82,12 +81,13 @@ pipeline {
             }
         }
     }
+
     post {
         success {
-            echo 'Build, analysis, and deployment succeeded!'
+            echo '✅ Build, SonarQube analysis, and Nexus deployment succeeded!'
         }
         failure {
-            echo 'Build, analysis, or deployment failed.'
+            echo '❌ Something went wrong during build, analysis, or deployment.'
         }
     }
 }
