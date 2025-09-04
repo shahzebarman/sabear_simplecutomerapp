@@ -10,7 +10,6 @@ pipeline {
         NEXUS_REPOSITORY = "Sunil"
         NEXUS_CREDENTIAL_ID = "Nexus"
         SCANNER_HOME = tool 'sonar-scanner'
-        SLACK_CHANNEL = "#devops-alerts" // Replace with your actual Slack channel name
     }
     stages {
         stage("Clone Code") {
@@ -18,13 +17,11 @@ pipeline {
                 git 'https://github.com/shahzebarman/sabear_simplecutomerapp.git'
             }
         }
-
         stage("Maven Build") {
             steps {
                 sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
         }
-
         stage("SonarCloud Analysis") {
             steps {
                 withSonarQubeEnv('sonarqube') {
@@ -42,14 +39,12 @@ pipeline {
                 }
             }
         }
-
         stage("Publish to Nexus") {
             steps {
                 script {
                     def pom = readMavenPom file: "pom.xml"
                     def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
                     def artifactPath = filesByGlob[0].path
-
                     if (fileExists(artifactPath)) {
                         echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version: ${pom.version}"
                         nexusArtifactUploader(
@@ -81,30 +76,19 @@ pipeline {
                 }
             }
         }
-
         stage("Deploy to Tomcat") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'tomcat', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'tomcat_credential', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     script {
                         def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
                         echo "Deploying ${warFile} to Tomcat at context path /simplecustomerapp ..."
                         sh """
                             curl -u $TOMCAT_USER:$TOMCAT_PASS \
                                  -T ${warFile} \
-                                 "http://3.89.121.33:8080/manager/text/deploy?path=/simplecustomerapp&update=true"
+                                 "http://52.87.164.24:8080//manager/text/deploy?path=/simplecustomerapp&update=true"
                         """
                     }
                 }
-            }
-        }
-
-        stage("Slack Notification") {
-            steps {
-                slackSend(
-                    channel: env.SLACK_CHANNEL,
-                    color: "#36A64F",
-                    message: "✅ *Simple Customer App* has been successfully deployed to Tomcat by *SNL* for Job: *${env.JOB_NAME}* [Build #${env.BUILD_NUMBER}]"
-                )
             }
         }
     }
