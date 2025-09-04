@@ -11,11 +11,11 @@ pipeline {
         // This can be http or https
         NEXUS_PROTOCOL = "http"
         // Where your Nexus is running
-        NEXUS_URL = "http://34.226.153.211:8081/"
+        NEXUS_URL = "34.226.153.211:8081/"
         // Repository where we will upload the artifact
         NEXUS_REPOSITORY = "techie-horizon-01"
         // Jenkins credential id to authenticate to Nexus OSS
-        NEXUS_CREDENTIAL_ID = "nexus_keygen"
+        NEXUS_CREDENTIAL_ID = "Nexus"
 	SCANNER_HOME = tool 'sonar-scanner'
     }
     stages {
@@ -38,7 +38,7 @@ pipeline {
         }
 	stage('SonarCloud') {
             steps {
-                withSonarQubeEnv('sonarqube_server') {
+                withSonarQubeEnv('sonarqube') {
 				sh '$SCANNER_HOME/bin/sonar-scanner \
 				-Dsonar.projectKey=Ncodeit \
 				-Dsonar.projectName=Ncodeit \
