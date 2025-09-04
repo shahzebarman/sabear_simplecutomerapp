@@ -73,8 +73,8 @@ pipeline {
                             nexusUrl: NEXUS_URL,
 			    groupId: pom.groupId,
                             version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
+                            repository: techie-horizon-01,
+                            credentialsId: Nexus,
                             artifacts: [
                                 // Artifact generated such as .jar, .ear and .war files.
                                 [artifactId: pom.artifactId,
