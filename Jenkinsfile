@@ -13,7 +13,7 @@ pipeline {
         // Where your Nexus is running
         NEXUS_URL = "34.226.153.211:8081/"
         // Repository where we will upload the artifact
-        NEXUS_REPOSITORY = "techie-horizon-01"
+        NEXUS_REPOSITORY = "Sunil"
         // Jenkins credential id to authenticate to Nexus OSS
         NEXUS_CREDENTIAL_ID = "Nexus"
 	SCANNER_HOME = tool 'sonar-scanner'
@@ -73,7 +73,7 @@ pipeline {
                             nexusUrl: NEXUS_URL,
 			    groupId: pom.groupId,
                             version: pom.version,
-                            repository: techie-horizon-01,
+                            repository:Sunil,
                             credentialsId: Nexus,
                             artifacts: [
                                 // Artifact generated such as .jar, .ear and .war files.
