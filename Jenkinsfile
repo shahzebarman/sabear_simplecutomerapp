@@ -1,48 +1,93 @@
-stage("Publish to Nexus") {
-    steps {
-        script {
-            // Read Maven pom.xml to get artifact info
-            def pom = readMavenPom file: "pom.xml"
+pipeline {
+    agent any
+    tools {
+        maven "maven"  // Make sure this matches your Jenkins Maven tool name
+    }
+    environment {
+        // Nexus settings
+        NEXUS_VERSION = "nexus3"
+        NEXUS_PROTOCOL = "http"
+        NEXUS_URL = "34.226.153.211:8081"
+        NEXUS_REPOSITORY = "new-nexus-repo"
+        NEXUS_CREDENTIAL_ID = "Nexus"
 
-            // Find the artifact in the target directory with the packaging extension (e.g., jar, war)
-            def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-            
-            // If no artifact found, stop the pipeline with an error
-            if (filesByGlob.length == 0) {
-                error "No artifacts found in target directory."
+        // Sonar scanner tool
+        SCANNER_HOME = tool 'sonar-scanner'
+
+        // SonarQube installation name configured in Jenkins (change to your actual name)
+        SONARQUBE_NAME = "sonarqube"  
+    }
+    stages {
+        stage("Clone Code") {
+            steps {
+                git 'https://github.com/shahzebarman/sabear_simplecutomerapp.git'
             }
-            
-            // Take the first artifact found
-            def artifact = filesByGlob[0]
-            
-            // Print artifact info in Jenkins console
-            echo "Found artifact: ${artifact.name}, path: ${artifact.path}"
-            
-            // Upload artifact to Nexus using the Nexus Artifact Uploader plugin
-            nexusArtifactUploader(
-                nexusVersion: NEXUS_VERSION,      // Nexus version, e.g., "nexus3"
-                protocol: NEXUS_PROTOCOL,          // Protocol, e.g., "http"
-                nexusUrl: NEXUS_URL,               // Nexus URL (host:port)
-                groupId: pom.groupId,              // Maven groupId from pom.xml
-                version: pom.version,              // Maven version from pom.xml
-                repository: NEXUS_REPOSITORY,      // Nexus repository name
-                credentialsId: NEXUS_CREDENTIAL_ID,// Jenkins credentials ID for Nexus login
-                artifacts: [
-                    [
-                        artifactId: pom.artifactId,  // Maven artifactId from pom.xml
-                        classifier: '',              // Classifier if any (empty here)
-                        file: artifact.path,         // Path to the artifact file
-                        type: pom.packaging          // Packaging type (jar, war, etc.)
-                    ],
-                    [
-                        artifactId: pom.artifactId,
-                        classifier: '',
-                        file: "pom.xml",             // Upload the pom.xml as well
-                        type: "pom"
-                    ]
-                ]
-            )
+        }
+
+        stage("Maven Build") {
+            steps {
+                sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+            }
+        }
+
+        stage('SonarCloud Analysis') {
+            steps {
+                withSonarQubeEnv("${env.sonar-qube}") {
+                    sh """
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=Ncodeit \
+                        -Dsonar.projectName=Ncodeit \
+                        -Dsonar.projectVersion=2.0 \
+                        -Dsonar.sources=src \
+                        -Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
+                        -Dsonar.junit.reportsPath=target/surefire-reports \
+                        -Dsonar.jacoco.reportPath=target/jacoco.exec \
+                        -Dsonar.java.binaries=src/com/room/sample
+                    """
+                }
+            }
+        }
+
+        stage("Publish to Nexus") {
+            steps {
+                script {
+                    def pom = readMavenPom file: "pom.xml"
+                    def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
+                    if (filesByGlob.length == 0) {
+                        error "No artifacts found in target directory."
+                    }
+                    def artifact = filesByGlob[0]
+                    echo "Found artifact: ${artifact.name}, path: ${artifact.path}"
+                    
+                    nexusArtifactUploader(
+                        nexusVersion: NEXUS_VERSION,
+                        protocol: NEXUS_PROTOCOL,
+                        nexusUrl: NEXUS_URL,
+                        groupId: pom.groupId,
+                        version: pom.version,
+                        repository: NEXUS_REPOSITORY,
+                        credentialsId: NEXUS_CREDENTIAL_ID,
+                        artifacts: [
+                            [artifactId: pom.artifactId,
+                             classifier: '',
+                             file: artifact.path,
+                             type: pom.packaging],
+                            [artifactId: pom.artifactId,
+                             classifier: '',
+                             file: "pom.xml",
+                             type: "pom"]
+                        ]
+                    )
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Build, analysis, and deployment succeeded!'
+        }
+        failure {
+            echo 'Build, analysis, or deployment failed.'
         }
     }
 }
-
