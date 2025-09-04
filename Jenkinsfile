@@ -15,7 +15,7 @@ pipeline {
         SCANNER_HOME = tool 'sonar-scanner'
 
         // This must match the name of your SonarQube installation in Jenkins > Configure System
-        SONARQUBE_INSTALLATION_NAME = "sonar-qube"
+        SONARQUBE_INSTALLATION_NAME = "sonar-qube-server"
     }
     stages {
         stage("Clone Code") {
