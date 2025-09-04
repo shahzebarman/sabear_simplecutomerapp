@@ -29,7 +29,7 @@ pipeline {
         
         stage('SonarCloud') {
             steps {
-                withSonarQubeEnv('sonarqube') {
+                withSonarQubeEnv('sonar-qube') {
                     // Run sonar-scanner CLI with parameters properly
                     sh """
                         ${SCANNER_HOME}/bin/sonar-scanner \
