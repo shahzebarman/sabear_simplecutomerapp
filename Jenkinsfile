@@ -91,5 +91,13 @@ pipeline {
                 }
             }
         }
+        stage("Slack Notification") {
+        slackSend(
+            channel: env.SLACK_CHANNEL,
+            color: "#36A64F",
+            message: "Scripted pipeline for *Simple Customer App* has been successfully deployed in Tomcat :white_tick: by SNL for Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]"
+        )
+    }
+}
     }
 }
