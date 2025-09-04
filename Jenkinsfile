@@ -91,5 +91,16 @@ pipeline {
                 }
             }
         }
+        stage("Deploy to Tomcat") {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'tomcat_credential', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+            script {
+                // Find the WAR file built by Maven
+                def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
+                echo "Deploying ${warFile} to Tomcat at context path /simplecustomerapp ..."
+                sh """
+                    curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                         -T ${warFile} \
+                         "http://52.87.164.24:8080/manager/text/deploy?path=/simplecustomerapp&update=tru"
     }
 }
