@@ -31,19 +31,24 @@ pipeline {
             }
         }
 
-        stage("SonarQube Analysis") {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh '''
-                        $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectKey=Ncodeit \
-                        -Dsonar.projectName=Ncodeit \
-                        -Dsonar.projectVersion=2.0 \
-                        -Dsonar.sources=src \
-                        -Dsonar.java.binaries=target/classes \
-                        -Dsonar.junit.reportsPath=target/surefire-reports \
-                        -Dsonar.jacoco.reportPath=target/jacoco.exec
-                    '''
+       stage("SonarQube Analysis") {
+    steps {
+        withSonarQubeEnv("${env.SONARQUBE_INSTALLATION_NAME}") {
+            sh """
+                echo "⚙️ Checking if compiled classes exist"
+                ls -la target/classes || echo "⚠️ target/classes does not exist!"
+
+                ${SCANNER_HOME}/bin/sonar-scanner \
+                -Dsonar.projectKey=Ncodeit \
+                -Dsonar.projectName=Ncodeit \
+                -Dsonar.projectVersion=2.0 \
+                -Dsonar.sources=src \
+                -Dsonar.java.binaries=target/classes \
+                -Dsonar.junit.reportsPath=target/surefire-reports \
+                -Dsonar.jacoco.reportPath=target/jacoco.exec \
+                -X
+                    """
+                
                 }
             }
         }
