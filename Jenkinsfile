@@ -1,29 +1,31 @@
 pipeline {
     agent any
+
     tools {
         maven "maven"
     }
 
     environment {
-        // Nexus details
+        // Nexus configuration
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
         NEXUS_URL = "34.226.153.211:8081"
-        NEXUS_REPOSITORY = "Sunil"
+        NEXUS_REPOSITORY = "maven-releases" // Make sure this is correct in Nexus
         NEXUS_CREDENTIAL_ID = "Nexus"
 
-        // Sonar Scanner
+        // SonarQube configuration
         SCANNER_HOME = tool 'sonar-scanner'
     }
 
     stages {
+
         stage("Clone Code") {
             steps {
                 git 'https://github.com/shahzebarman/sabear_simplecutomerapp.git'
             }
         }
 
-        stage("Maven Build") {
+        stage("Build with Maven") {
             steps {
                 sh 'mvn -Dmaven.test.failure.ignore=true clean install'
             }
@@ -51,33 +53,34 @@ pipeline {
                 script {
                     def pom = readMavenPom file: "pom.xml"
                     def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-
-                    if (filesByGlob.length == 0) {
-                        error "*** No artifacts found to upload."
-                    }
-
                     def artifactPath = filesByGlob[0].path
-                    echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}"
+                    def artifactExists = fileExists artifactPath
 
-                    nexusArtifactUploader(
-                        nexusVersion: NEXUS_VERSION,
-                        protocol: NEXUS_PROTOCOL,
-                        nexusUrl: NEXUS_URL,
-                        groupId: pom.groupId,
-                        version: pom.version,
-                        repository: NEXUS_REPOSITORY,
-                        credentialsId: NEXUS_CREDENTIAL_ID,
-                        artifacts: [
-                            [artifactId: pom.artifactId,
-                             classifier: '',
-                             file: artifactPath,
-                             type: pom.packaging],
-                            [artifactId: pom.artifactId,
-                             classifier: '',
-                             file: "pom.xml",
-                             type: "pom"]
-                        ]
-                    )
+                    if (artifactExists) {
+                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}"
+                        
+                        nexusArtifactUploader(
+                            nexusVersion: env.NEXUS_VERSION,
+                            protocol: env.NEXUS_PROTOCOL,
+                            nexusUrl: env.NEXUS_URL,
+                            groupId: pom.groupId,
+                            version: pom.version,
+                            repository: env.NEXUS_REPOSITORY,
+                            credentialsId: env.NEXUS_CREDENTIAL_ID,
+                            artifacts: [
+                                [artifactId: pom.artifactId,
+                                 classifier: '',
+                                 file: artifactPath,
+                                 type: pom.packaging],
+                                [artifactId: pom.artifactId,
+                                 classifier: '',
+                                 file: "pom.xml",
+                                 type: "pom"]
+                            ]
+                        )
+                    } else {
+                        error "*** File: ${artifactPath} could not be found"
+                    }
                 }
             }
         }
@@ -96,15 +99,6 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Pipeline executed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed. Check logs above."
         }
     }
 }
